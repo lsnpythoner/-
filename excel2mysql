@@ -1,0 +1,49 @@
+# -*- coding: utf-8 -*-
+import os
+import MySQLdb
+import xlrd
+#定义目录变量Dir
+Dir = 'D:'
+#遍历该目录
+for root,dirs,files in os.walk(Dir):
+    #此时files是list，将files再次遍历
+    for i in files:
+        #通过str.endswich判断文件格式（.xls)
+        if i.endswith('.xls'):
+            #通过xlrd工具打开.xls文件,os.path.join(roo,name),输出文件的绝对路径
+            book = xlrd.open_workbook(os.path.join(root,i))
+            sheet = book.sheet_by_index(0)
+            #连接数据库
+            database = MySQLdb.connect (host = '10.110.195.26',user = 'root', passwd ='11111a=',db='basic_information')
+            #定义编码
+            database.set_character_set('utf8')
+            #创建游标
+            cursor = database.cursor()
+            #定义游标编码
+            cursor.execute('SET NAMES utf8;') 
+            cursor.execute('SET CHARACTER SET utf8;')
+            cursor.execute('SET character_set_connection=utf8;')
+            #创建表
+            cursor.execute( "create table " + "`" + i.decode('gbk') + "`" + " (A VARCHAR(255),B VARCHAR(255),C VARCHAR(255),D VARCHAR(255))")
+            query = "INSERT INTO " + "`"  + i.decode('gbk') + "`" + " (A,B,C,D) VALUES (%s, %s, %s, %s)"
+            将excel文件遍历到数据库中
+            for r in range(1,sheet.nrows):
+                A = sheet.cell(r,0).value
+                B = sheet.cell(r,1).value
+                C = sheet.cell(r,2).value
+                D = sheet.cell(r,3).value
+    
+                values = (A,B,C,D)
+                cursor.execute(query,values)
+            #关闭游标
+            cursor.close()
+            #提交数据库
+            database.commit()
+            #关闭数据库
+            database.close()
+            
+
+            print""
+            print"Done"
+            print""
+            print"我刚刚导入到数据库"
